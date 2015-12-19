@@ -21,16 +21,27 @@ func main() {
         // TODO: defer close channels
 
         log.Println("Created session", session)
+
+        // HACK: send 10 '\n' chars otherwise no answer comes back
+        // might be a buffer that needs flushed, TCPConn.SetWriteBuffer(1)
+        // doesn't seem to work.
+        // TODO: ask Mario
+        session.write <- "g\n\n\n\n\n\n\n\n\n\n"
+
+        // print incoming messages to console
+        for msg := range session.read {
+                log.Println(msg)
+        }
 }
 
 // holds a FICS telnet session
 type FicsSession struct {
 
         // channel for reading incoming messages
-        in      chan<- string
+        read    <-chan string
 
         // channel for writing outgoing messages
-        out     <-chan string
+        write   chan<- string
 }
 
 // creates a new FICS session
@@ -92,7 +103,7 @@ func NewFicsSession() (*FicsSession, error) {
         }()
 
         return &FicsSession{
-                in:     in,
-                out:    out,
+                read:   in,
+                write:  out,
         }, nil
 }
