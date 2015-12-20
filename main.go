@@ -3,35 +3,26 @@ package main
 import (
         "bufio"
         "fmt"
+        "github.com/gorilla/websocket"
         "log"
         "net"
+        "net/http"
         "strings"
         "unicode/utf8"
 )
 
 const addr = "freechess.org:5000"
 
+var upgrader = websocket.Upgrader{} // use default options
+
+// TODO: parse config values from flags
 func main() {
-        log.Println("Begin")
-        session, err := NewFicsSession()
-        if err != nil {
-                panic(err)
-        }
+        log.Println("Starting server")
+        http.HandleFunc("/ws", wsHandler)
 
-        // TODO: defer close channels
+        http.Handle("/", http.FileServer(http.Dir("./html")))
 
-        log.Println("Created session", session)
-
-        // HACK: send 10 '\n' chars otherwise no answer comes back
-        // might be a buffer that needs flushed, TCPConn.SetWriteBuffer(1)
-        // doesn't seem to work.
-        // TODO: ask Mario
-        session.write <- "g\n\n\n\n\n\n\n\n\n\n"
-
-        // print incoming messages to console
-        for msg := range session.read {
-                log.Println(msg)
-        }
+        log.Fatal(http.ListenAndServe("localhost:3030", nil))
 }
 
 // holds a FICS telnet session
@@ -106,4 +97,42 @@ func NewFicsSession() (*FicsSession, error) {
                 read:   in,
                 write:  out,
         }, nil
+}
+
+func (session *FicsSession) ConnectGuest() {
+
+        log.Println("Signing in as guest")
+
+        // HACK: send 10 '\n' chars otherwise no answer comes back
+        // might be a buffer that needs flushed, TCPConn.SetWriteBuffer(1)
+        // doesn't seem to work.
+        // TODO: ask Mario
+        session.write <- "g\n\n\n\n\n\n\n\n\n\n"
+}
+
+func wsHandler(w http.ResponseWriter, r *http.Request) {
+        c, err := upgrader.Upgrade(w, r, nil)
+        if err != nil {
+                log.Print("upgrade:", err)
+                return
+        }
+        defer c.Close()
+
+        s, err := NewFicsSession()
+        if err != nil {
+                panic(err)
+        }
+        // TODO: defer close channels
+
+        log.Println("Created session", s)
+        s.ConnectGuest()
+        log.Println("Connected as guest")
+
+        for msg := range s.read {
+                err = c.WriteMessage(websocket.TextMessage, []byte(msg))
+                if err != nil {
+                        log.Println("write:", err)
+                        break
+                }
+        }
 }
