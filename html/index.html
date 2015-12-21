@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="height: 100%;">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,7 +8,7 @@
     <title>Bootstrap 101 Template</title>
 
     <!-- Bootstrap -->
-    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -17,27 +17,21 @@
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
       <![endif]-->
   </head>
-  <body>
-    <table>
-        <tr><td valign="top" width="50%">
-            <p>Click "Open" to create a connection to the server, 
-                "Send" to send a message to the server and "Close" to close the connection. 
-                You can change the message and send multiple times.
-                <p>
-                    <form>
-                        <button id="open">Open</button>
-                        <button id="close">Close</button>
-                        <p><input id="input" type="text" value="Hello world!">
-                            <button id="send">Send</button>
-                        </form>
-                    </td><td valign="top" width="50%">
-                    <div id="output"></div>
-                </td></tr></table>
-            </body>
-            <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-            <!-- Include all compiled plugins (below), or include individual files as needed -->
-            <script src="bootstrap/js/bootstrap.min.js"></script>
-            <script src="js/app.js"></script>
-        </body>
-        </html>
+  <body style="height: 100%;">
+      <div class="panel panel-primary" style="height: 100%;">
+          <div class="panel-body" style="min-height: 90%; max-height: 90%; overflow-y: scroll;" id="output"></div>
+          <div class="panel-body" style="min-height: 10%; max-height: 10%;">
+            <form>
+                <input id="input" type="text" class="form-control" placeholder="Enter FICS command" />
+                <button id="send" class="btn btn-default">Send</button>
+                <button id="close" class="btn btn-default">Close</button>
+            </form>
+        </div>
+    </div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

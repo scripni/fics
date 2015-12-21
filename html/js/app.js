@@ -7,7 +7,10 @@ window.addEventListener("load", function(evt) {
         d.innerHTML = message;
         output.appendChild(d);
     };
-    document.getElementById("open").onclick = function(evt) {
+
+    $(document).ready(function() {
+        
+        console.log("ready");
         if (ws) {
             return false;
         }
@@ -30,7 +33,7 @@ window.addEventListener("load", function(evt) {
         };
 
         return false;
-    };
+    });
 
     document.getElementById("send").onclick = function(evt) {
         if (!ws) {
@@ -40,7 +43,7 @@ window.addEventListener("load", function(evt) {
         ws.send(input.value);
         return false;
     };
-    
+
     document.getElementById("close").onclick = function(evt) {
         if (!ws) {
             return false;
