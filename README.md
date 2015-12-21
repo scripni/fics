@@ -1,1 +1,1 @@
-Telnet tunnel allowing connections to freechess.org over websockets.
+HTML terminal for the Free Internet Chess Server (FICS).
