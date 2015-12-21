@@ -17,7 +17,8 @@ var upgrader = websocket.Upgrader{} // use default options
 func main() {
         log.Println("Starting server")
         http.HandleFunc("/ws", wsHandler)
-
+        fs := http.FileServer(http.Dir("/bootstrap"))
+        http.Handle("/bootstrap", http.StripPrefix("/bootstrap", fs))
         http.Handle("/", http.FileServer(http.Dir("./html")))
 
         log.Fatal(http.ListenAndServe("localhost:3030", nil))
