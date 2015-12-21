@@ -7,8 +7,6 @@ import (
         "log"
         "net"
         "net/http"
-        "strings"
-        "unicode/utf8"
 )
 
 const addr = "freechess.org:5000"
@@ -27,17 +25,14 @@ func main() {
 
 // holds a FICS telnet session
 type FicsSession struct {
-
         // channel for reading incoming messages
-        read    <-chan string
-
+        read    <-chan []byte
         // channel for writing outgoing messages
-        write   chan<- string
+        write   chan<- []byte
 }
 
 // creates a new FICS session
 func NewFicsSession() (*FicsSession, error) {
-
         log.Println("Connecting to", addr)
 
         // resolve host
@@ -54,12 +49,19 @@ func NewFicsSession() (*FicsSession, error) {
 
         // set a custom scanner splitting input by 'fics%'
         scanner := bufio.NewScanner(conn)
-        const split = "fics%"
+        var split = []byte("fics%")
         scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 
-                if i := strings.Index(string(data), split); i >= 0 {
+                if i := IndexBytes(data, split); i >= 0 {
+                        out := make([]byte, 0, i)
+                        for j := 0; j < i; j++ {
+                                if data[j] <= 0x7f {
+                                        out = append(out, data[j])
+                                }
+                        }
+
                         // skip message plus token, read up to token, no error
-                        return i + utf8.RuneCountInString(split), data[:i], nil
+                        return i + len(split), out, nil
                 }
 
                 // TODO: atEOF == true
@@ -68,11 +70,10 @@ func NewFicsSession() (*FicsSession, error) {
         })
 
         // set up read channel
-        in := make(chan string)
+        in := make(chan []byte)
         go func() {
                 for scanner.Scan() {
-                        log.Println("Scanning for next message")
-                        in <- scanner.Text()
+                        in <- scanner.Bytes()
                 }
 
                 // TODO: EOF, goroutine leak
@@ -80,7 +81,7 @@ func NewFicsSession() (*FicsSession, error) {
         }()
 
         // set up write channel
-        out := make(chan string)
+        out := make(chan []byte)
         go func() {
                 for {
                         // ignore number of bytes written
@@ -99,6 +100,25 @@ func NewFicsSession() (*FicsSession, error) {
         }, nil
 }
 
+// finds the first occurence of a subarray
+func IndexBytes(message []byte, token []byte) int {
+        i, j := 0, 0
+        for ; i < len(message) && j < len(token); i++ {
+                if message[i] == token[j] {
+                        j++
+                } else {
+                        j = 0
+                }
+        }
+
+        if j == len(token) {
+                return i - len(token)
+        } else {
+                return -1
+        }
+}
+
+// connects the user as a guest
 func (session *FicsSession) ConnectGuest() {
 
         log.Println("Signing in as guest")
@@ -107,9 +127,10 @@ func (session *FicsSession) ConnectGuest() {
         // might be a buffer that needs flushed, TCPConn.SetWriteBuffer(1)
         // doesn't seem to work.
         // TODO: ask Mario
-        session.write <- "g\n\n\n\n\n\n\n\n\n\n"
+        session.write <- []byte("g\n\n\n\n\n\n\n\n\n\n")
 }
 
+// handles an incoming websocket connection
 func wsHandler(w http.ResponseWriter, r *http.Request) {
         c, err := upgrader.Upgrade(w, r, nil)
         if err != nil {
@@ -128,10 +149,11 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
         s.ConnectGuest()
         log.Println("Connected as guest")
 
+        // write out all messages
         for msg := range s.read {
-                err = c.WriteMessage(websocket.TextMessage, []byte(msg))
+                err = c.WriteMessage(websocket.TextMessage, msg)
                 if err != nil {
-                        log.Println("write:", err)
+                        log.Println("error writing message:", err)
                         break
                 }
         }
