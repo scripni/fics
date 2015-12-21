@@ -1,0 +1,18 @@
+{
+  "name": "fics-frontend",
+  "homepage": "https://github.com/scripni/fics",
+  "authors": [
+    "Andrei Scripniciuc <scripni@users.noreply.github.com>"
+  ],
+  "description": "",
+  "main": "index.html",
+  "moduleType": [],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
